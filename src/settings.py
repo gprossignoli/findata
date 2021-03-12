@@ -36,3 +36,7 @@ error_logger.setFormatter(formatter)
 logger.addHandler(debug_logger)
 logger.addHandler(info_logger)
 logger.addHandler(error_logger)
+
+# ObtainExchangeTickersUseCase
+# Ibex35, S&P500, Dow Jones, Nasdaq, Euro stoxx50, EURONEXT100, IBEX Medium Cap, IBEX Small cap.
+exchanges = ('^IBEX', '^GSPC', '^DJI', '^IXIC', '^STOXX50E', '^N100', 'INDC.MC', 'INDS.MC')

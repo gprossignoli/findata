@@ -3,3 +3,5 @@ yfinance==0.1.55
 beautifulsoup4==4.9.3
 ujson==4.0.2
 pymongo==3.11.3
+pandas==1.2.2
+requests==2.25.1
