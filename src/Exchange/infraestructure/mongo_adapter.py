@@ -27,6 +27,7 @@ class MongoAdapter(ExchangeRepositoryInterface):
         except PyMongoError as e:
             st.logger.exception(e)
             raise RepositoryException()
+        st.logger.info(f'{exchange.ticker} updated')
 
     @classmethod
     def __connect_to_db(cls):

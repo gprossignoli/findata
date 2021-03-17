@@ -13,16 +13,16 @@ MONGO_HOST, MONGO_PORT = config.get("DB", "mongo_db").split(":")
 
 # LOGGING CONFIG
 
-logger = logging.getLogger('findata')
 logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('findata')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-#to log debug messages
+# to log debug messages
 debug_logger = logging.StreamHandler()
 debug_logger.setLevel(logging.DEBUG)
 debug_logger.setFormatter(formatter)
 
-#to log general messages
+# to log general messages
 # x2 files of 2mb
 info_logger = RotatingFileHandler(filename='findata.log', maxBytes=2097152, backupCount=2)
 info_logger.setLevel(logging.INFO)

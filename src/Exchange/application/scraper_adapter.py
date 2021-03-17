@@ -23,6 +23,7 @@ class ScraperAdapter(ExchangeServiceInterface):
         return Exchange(ticker=ticker, symbols=symbols)
 
     def fetch_stocks(self, exchanges: tuple[str, ...]):
+        print("running job")
         for exchange in exchanges:
             tickers = self.__fetch_symbols(exchange)
             exchange = self.create_exchange_entity(ticker=exchange, symbols=tickers)
