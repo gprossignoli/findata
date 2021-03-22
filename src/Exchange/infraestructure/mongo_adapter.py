@@ -16,7 +16,7 @@ class MongoAdapter(ExchangeRepositoryInterface):
     def __init__(self):
         self.__connect_to_db()
 
-    def save_tickers(self, exchange: Exchange):
+    def save_exchange(self, exchange: Exchange) -> None:
         collection = self.__db_client['findata']['exchanges']
         doc_filter = {'_id': exchange.ticker}
         doc_values = {"$set": {"tickers": exchange.symbols,
@@ -28,6 +28,12 @@ class MongoAdapter(ExchangeRepositoryInterface):
             st.logger.exception(e)
             raise RepositoryException()
         st.logger.info(f'{exchange.ticker} updated')
+
+    def get_exchanges(self) -> tuple[Exchange, ...]:
+        collection = self.__db_client['findata']['exchanges']
+        data = collection.find({})
+        exchanges = [Exchange(ticker=d['_id'], symbols=d['tickers']) for d in data]
+        return tuple(exchanges)
 
     @classmethod
     def __connect_to_db(cls):

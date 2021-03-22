@@ -1,5 +1,6 @@
 import re
 import requests
+from requests.exceptions import RequestException
 from bs4 import BeautifulSoup
 import ujson
 
@@ -7,6 +8,11 @@ from src.Exchange.domain.exceptions import RepositoryException
 from src.Exchange.domain.exchange import Exchange
 from src.Exchange.domain.ports.exchange_repository_interface import ExchangeRepositoryInterface
 from src.Exchange.domain.ports.exchange_service_interface import ExchangeServiceInterface
+from src import settings as st
+
+
+class ScraperException(Exception):
+    pass
 
 
 class ScraperAdapter(ExchangeServiceInterface):
@@ -16,25 +22,31 @@ class ScraperAdapter(ExchangeServiceInterface):
     e.g. https://es.finance.yahoo.com/quote/^IBEX/components
     """
 
-    def __init__(self, repository: ExchangeRepositoryInterface):
-        super().__init__(repository)
-
     def create_exchange_entity(self, ticker: str, symbols: tuple[str, ...]) -> Exchange:
         return Exchange(ticker=ticker, symbols=symbols)
 
     def fetch_stocks(self, exchanges: tuple[str, ...]):
-        print("running job")
+        st.logger.info("Fetching stocks for the following exchanges: {}".format(exchanges))
         for exchange in exchanges:
-            tickers = self.__fetch_symbols(exchange)
-            exchange = self.create_exchange_entity(ticker=exchange, symbols=tickers)
             try:
-                self.repository.save_tickers(exchange)
+                tickers = self.__fetch_symbols(exchange)
+            except ScraperException:
+                raise RepositoryException()
+
+            exchange = self.create_exchange_entity(ticker=exchange, symbols=tickers)
+            st.logger.info("Saving the information of the exchange: {}".format(exchange))
+            try:
+                self.repository.save_exchange(exchange)
             except RepositoryException as e:
                 raise e
 
     @staticmethod
     def __fetch_symbols(exchange):
-        req = requests.get(url=f'https://es.finance.yahoo.com/quote/{exchange}/components')
+        try:
+            req = requests.get(url=f'https://es.finance.yahoo.com/quote/{exchange}/components')
+        except RequestException as e:
+            st.logger.exception(e)
+            raise ScraperException
         soup = BeautifulSoup(req.content, features='lxml')
         script = soup.find("script", text=re.compile("root.App.main"))
         # It's necessary to use json, because the page uses react for loading the data.

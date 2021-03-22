@@ -10,9 +10,16 @@ class ExchangeRepositoryInterface(metaclass=ABCMeta):
                 callable(subclass.execute)) or NotImplemented
 
     @abstractmethod
-    def save_tickers(self, exchange: Exchange):
+    def save_exchange(self, exchange: Exchange):
         """
-        Saves the entity into the mongo collection
+        Saves the entity into the DB
         :param exchange: Exchange entity
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def get_exchanges(self) -> tuple[Exchange, ...]:
+        """
+        :return: All exchanges data from DB
         """
         raise NotImplemented
