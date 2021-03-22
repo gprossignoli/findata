@@ -1,10 +1,16 @@
 import time
 
-from src.Exchange.application.use_cases import ObtainExchangeTickersUseCase
+from apscheduler.schedulers.background import BackgroundScheduler
 
+from src.Exchange.application.use_cases import ObtainExchangeTickersUseCase
+from src.Symbol.application.use_cases import FetchSymbolsData
+from src import settings as st
 
 if __name__ == '__main__':
-    ObtainExchangeTickersUseCase().execute_with_scheduler()
+
+    scheduler = BackgroundScheduler(logger=st.logger)
+    ObtainExchangeTickersUseCase().execute_with_scheduler(scheduler)
+    FetchSymbolsData().execute()
     while True:
         time.sleep(60)
         pass

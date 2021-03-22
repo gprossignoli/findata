@@ -28,3 +28,4 @@ class HttpRequest:
         except RequestException as e:
             st.logger.exception(e)
             raise
+
