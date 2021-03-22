@@ -7,3 +7,4 @@ pandas==1.2.2
 requests==2.25.1
 python-crontab==2.5.1
 APScheduler==3.7.0
+urllib3==1.26.3

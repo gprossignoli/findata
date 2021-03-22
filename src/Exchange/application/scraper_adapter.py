@@ -1,13 +1,11 @@
 import re
-import requests
-from requests.exceptions import RequestException
 from bs4 import BeautifulSoup
 import ujson
 
 from src.Exchange.domain.exceptions import RepositoryException
 from src.Exchange.domain.exchange import Exchange
-from src.Exchange.domain.ports.exchange_repository_interface import ExchangeRepositoryInterface
 from src.Exchange.domain.ports.exchange_service_interface import ExchangeServiceInterface
+from src.Utils.http_request import HttpRequest, HttpRequestException
 from src import settings as st
 
 
@@ -43,9 +41,9 @@ class ScraperAdapter(ExchangeServiceInterface):
     @staticmethod
     def __fetch_symbols(exchange):
         try:
-            req = requests.get(url=f'https://es.finance.yahoo.com/quote/{exchange}/components')
-        except RequestException as e:
-            st.logger.exception(e)
+            req = HttpRequest(status_forcelist=[300, 301, 400, 401, 403, 404, 408, 500, 502, 503])\
+                .get(url=f'https://es.finance.yahoo.com/quote/{exchange}/components', timeout=15)
+        except HttpRequestException as e:
             raise ScraperException
         soup = BeautifulSoup(req.content, features='lxml')
         script = soup.find("script", text=re.compile("root.App.main"))
