@@ -11,7 +11,7 @@ class SymbolRepositoryInterface(metaclass=ABCMeta):
     @abstractmethod
     def fetch_symbols(self, symbols_tickers: tuple[str, ...]) -> tuple[namedtuple, ...]:
         """
-        Saves the entity into the mongo collection
+        Fetches each symbol name, isin and historical data
         :param symbols_tickers: symbol's tickers from which get the info
         """
         raise NotImplemented

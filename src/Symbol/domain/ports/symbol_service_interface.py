@@ -2,9 +2,9 @@ from abc import ABCMeta, abstractmethod
 
 from src.Exchange.domain.exchange import Exchange
 from src.Exchange.domain.ports.exchange_repository_interface import ExchangeRepositoryInterface
-from src.Symbol.domain.symbol_publisher_interface import SymbolPublisherInterface
-from src.Symbol.domain.symbol_repository_interface import SymbolRepositoryInterface
-from src.Symbol.domain.ticker import Symbol
+from src.Symbol.domain.ports.symbol_publisher_interface import SymbolPublisherInterface
+from src.Symbol.domain.ports.symbol_repository_interface import SymbolRepositoryInterface
+from src.Symbol.domain.symbol import Symbol
 
 
 class SymbolServiceInterface(metaclass=ABCMeta):
