@@ -19,7 +19,6 @@ class YFinanceAdapter(SymbolServiceInterface):
 
     def fetch_all_symbols(self) -> tuple[Symbol, ...]:
         symbols = []
-
         exchanges = self.exchanges_repository.get_exchanges()
         for exchange in exchanges:
             if exchange.symbols:
@@ -33,9 +32,9 @@ class YFinanceAdapter(SymbolServiceInterface):
                     # and it discards all the indexes until the first valid index
                     historical_data = symbol_info.history.fillna(method='ffill').dropna()
                     symbols.append(self.create_symbol_entity(ticker=symbol_info.ticker,
-                                                               name=symbol_info.name,
-                                                               isin=symbol_info.isin,
-                                                               historical_data=historical_data))
+                                                             name=symbol_info.name,
+                                                             isin=symbol_info.isin,
+                                                             historical_data=historical_data))
 
                 # 5 secs between executions to avoid overloading yahoo finance api
                 time.sleep(5)

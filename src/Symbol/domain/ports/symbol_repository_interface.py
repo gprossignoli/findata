@@ -5,8 +5,8 @@ from collections import namedtuple
 class SymbolRepositoryInterface(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
-        return (hasattr(subclass, 'save_tickers') and
-                callable(subclass.execute)) or NotImplemented
+        return (hasattr(subclass, 'fetch_symbols') and
+                callable(subclass.fetch_symbols)) or NotImplemented
 
     @abstractmethod
     def fetch_symbols(self, symbols_tickers: tuple[str, ...]) -> tuple[namedtuple, ...]:
