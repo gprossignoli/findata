@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
-from src.Exchange.domain.exchange import Exchange
+from pandas import DataFrame
+
 from src.Exchange.domain.ports.exchange_repository_interface import ExchangeRepositoryInterface
 from src.Symbol.domain.ports.symbol_publisher_interface import SymbolPublisherInterface
 from src.Symbol.domain.ports.symbol_repository_interface import SymbolRepositoryInterface
@@ -13,7 +14,9 @@ class SymbolServiceInterface(metaclass=ABCMeta):
         return (hasattr(subclass, 'fetch_all_symbols') and
                 callable(subclass.fetch_all_symbols) and
                 hasattr(subclass, 'publish_symbols') and
-                callable(subclass.publish_symbols)) or NotImplemented
+                callable(subclass.publish_symbols) and
+                hasattr(subclass, 'create_symbol_entity') and
+                callable(subclass.create_symbol_entity)) or NotImplemented
 
     def __init__(self, publisher: SymbolPublisherInterface, symbols_repository: SymbolRepositoryInterface,
                  exchanges_repository: ExchangeRepositoryInterface):
@@ -39,4 +42,9 @@ class SymbolServiceInterface(metaclass=ABCMeta):
         :param symbols: Symbols entities
         """
 
+        raise NotImplemented
+
+    @abstractmethod
+    def create_symbol_entity(self, ticker: str, historical_data: DataFrame, name: str = None,
+                             isin: str = None) -> Symbol:
         raise NotImplemented
