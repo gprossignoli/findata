@@ -2,15 +2,11 @@ import re
 from bs4 import BeautifulSoup
 import ujson
 
-from src.Exchange.domain.exceptions import RepositoryException
+from src.Utils.exceptions import RepositoryException, DomainServiceException
 from src.Exchange.domain.exchange import Exchange
 from src.Exchange.domain.ports.exchange_service_interface import ExchangeServiceInterface
 from src.Utils.http_request import HttpRequest, HttpRequestException
 from src import settings as st
-
-
-class ScraperException(Exception):
-    pass
 
 
 class ScraperAdapter(ExchangeServiceInterface):
@@ -28,15 +24,15 @@ class ScraperAdapter(ExchangeServiceInterface):
         for exchange in exchanges:
             try:
                 tickers = self.__fetch_symbols(exchange)
-            except ScraperException:
+            except DomainServiceException:
                 raise RepositoryException()
 
             exchange = self.create_exchange_entity(ticker=exchange, symbols=tickers)
             st.logger.info("Saving the information of the exchange: {}".format(exchange))
             try:
                 self.repository.save_exchange(exchange)
-            except RepositoryException as e:
-                raise e
+            except RepositoryException:
+                raise DomainServiceException()
 
     @staticmethod
     def __fetch_symbols(exchange):
@@ -44,7 +40,8 @@ class ScraperAdapter(ExchangeServiceInterface):
             req = HttpRequest(status_forcelist=[300, 301, 400, 401, 403, 404, 408, 500, 502, 503])\
                 .get(url=f'https://es.finance.yahoo.com/quote/{exchange}/components', timeout=15)
         except HttpRequestException as e:
-            raise ScraperException
+            raise DomainServiceException()
+
         soup = BeautifulSoup(req.content, features='lxml')
         script = soup.find("script", text=re.compile("root.App.main"))
         # It's necessary to use json, because the page uses react for loading the data.
