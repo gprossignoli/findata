@@ -28,5 +28,3 @@ class ExchangeServiceInterface(metaclass=ABCMeta):
     @abstractmethod
     def create_exchange_entity(self, ticker: str, symbols: tuple[str, ...]) -> Exchange:
         raise NotImplemented
-
-

@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
 from src import settings as st
-from src.Exchange.domain.exceptions import RepositoryException
+from src.Utils.exceptions import RepositoryException
 from src.Exchange.domain.exchange import Exchange
 
 from src.Exchange.domain.ports.exchange_repository_interface import ExchangeRepositoryInterface

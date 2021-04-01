@@ -1,5 +1,4 @@
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
-from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import ChannelError
 import ujson
 
@@ -14,10 +13,11 @@ class RabbitException(Exception):
 
 class RabbitmqPublisherAdapter(SymbolPublisherInterface):
     def __init__(self):
-        self.channel = self.__connect_to_rabbit()
+        self.connection = self.__connect_to_rabbit()
 
     def publish_symbols(self, symbols: tuple[Symbol, ...]) -> None:
         st.logger.info("Publishing symbols: {}".format([s.ticker for s in symbols]))
+        conn_channel = self.connection.channel()
         for symbol in symbols:
             adapted_historic = self.__adapt_symbol_historic(symbol.historical_data)
             message = {
@@ -26,18 +26,20 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
                 'name': symbol.name,
                 'historic': adapted_historic
             }
+            message = ujson.dumps(message)
             try:
-                self.channel.basic_publish(exchange=st.SYMBOLS_HISTORY_EXCHANGE, routing_key='findata.symbol',
-                                           body=ujson.dumps(message))
-            except ChannelError as e:
+                conn_channel.basic_publish(exchange=st.SYMBOLS_HISTORY_EXCHANGE, routing_key='findata.symbol',
+                                           body=message)
+            except Exception as e:
                 st.logger.exception(e)
                 pass
 
     @staticmethod
-    def __connect_to_rabbit() -> BlockingChannel:
+    def __connect_to_rabbit() -> BlockingConnection:
         """
         Opens the connection to rabbit, and prepares the exchange to be used.
         """
+        st.logger.info("Connecting to rabbitmq")
         credentials = PlainCredentials(username=st.RABBIT_USER, password=st.RABBIT_PASSW)
         connection = BlockingConnection(
             ConnectionParameters(host=st.MONGO_HOST, port=st.RABBIT_PORT,
@@ -49,8 +51,7 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
         except ChannelError as e:
             st.logger.exception(e)
             raise RabbitException()
-        return channel
-
+        return connection
 
     @staticmethod
     def __adapt_symbol_historic(historical_data):

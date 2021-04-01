@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
 
 from pandas import DataFrame
 
@@ -6,6 +7,8 @@ from src.Exchange.domain.ports.exchange_repository_interface import ExchangeRepo
 from src.Symbol.domain.ports.symbol_publisher_interface import SymbolPublisherInterface
 from src.Symbol.domain.ports.symbol_repository_interface import SymbolRepositoryInterface
 from src.Symbol.domain.symbol import Symbol
+
+symbol_information = namedtuple("symbol_information", "ticker, name, isin")
 
 
 class SymbolServiceInterface(metaclass=ABCMeta):
@@ -16,10 +19,12 @@ class SymbolServiceInterface(metaclass=ABCMeta):
                 hasattr(subclass, 'publish_symbols') and
                 callable(subclass.publish_symbols) and
                 hasattr(subclass, 'create_symbol_entity') and
-                callable(subclass.create_symbol_entity)) or NotImplemented
+                callable(subclass.create_symbol_entity) and
+                hasattr(subclass, 'fetch_all_symbols_info') and
+                callable(subclass.fetch_all_symbols_info)) or NotImplemented
 
-    def __init__(self, publisher: SymbolPublisherInterface, symbols_repository: SymbolRepositoryInterface,
-                 exchanges_repository: ExchangeRepositoryInterface):
+    def __init__(self, symbols_repository: SymbolRepositoryInterface, exchanges_repository: ExchangeRepositoryInterface,
+                 publisher: SymbolPublisherInterface = None):
         self.publisher = publisher
         self.symbols_repository = symbols_repository
         self.exchanges_repository = exchanges_repository
@@ -31,7 +36,13 @@ class SymbolServiceInterface(metaclass=ABCMeta):
 
         :return: Symbols entities.
         """
+        raise NotImplemented
 
+    @abstractmethod
+    def fetch_all_symbols_info(self) -> None:
+        """
+        Fetch all symbols basic info and then saves it into db.
+        """
         raise NotImplemented
 
     @abstractmethod
