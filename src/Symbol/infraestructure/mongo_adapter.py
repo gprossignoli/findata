@@ -1,22 +1,24 @@
 import typing
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
+from src.Symbol.domain.ports.symbol_repository_interface import SymbolRepositoryInterface
+from src.Symbol.domain.symbol import SymbolInformation
 from src.Utils.exceptions import RepositoryException
-from src.Symbol.domain.ports.symbol_repository_interface import SymbolRepositoryInterface, symbol_info
 from src import settings as st
 
 
 class MongoAdapter(SymbolRepositoryInterface):
+
     __db_client = None
 
     def __init__(self):
         self.__connect_to_db()
+        self.collection = self.__db_client['findata']['symbols']
 
-    def save_symbols_info(self, symbols: tuple[typing.NamedTuple, ...]):
-        collection = self.__db_client['findata']['symbols']
+    def save_symbols_info(self, symbols: tuple[SymbolInformation, ...]):
         st.logger.info("Updating {} symbols info".format(len(symbols)))
         for symbol in symbols:
             doc_filter = {'_id': getattr(symbol, 'ticker')}
@@ -25,21 +27,42 @@ class MongoAdapter(SymbolRepositoryInterface):
                                    "date": datetime.utcnow()}}
 
             try:
-                collection.update_one(filter=doc_filter, update=doc_values, upsert=True)
+                self.collection.update_one(filter=doc_filter, update=doc_values, upsert=True)
             except PyMongoError as e:
                 st.logger.exception(e)
                 st.logger.info("Symbol info for {} not updated due to an error".format(getattr(symbol, 'ticker')))
                 continue
 
-    def get_symbols_info(self) -> tuple[symbol_info, ...]:
-        collection = self.__db_client['findata']['symbols']
+    def get_symbols_info(self) -> tuple[SymbolInformation, ...]:
         try:
-            data = collection.find({})
+            data = self.collection.find({})
         except PyMongoError as e:
             st.logger.exception(e)
             raise RepositoryException
 
-        return tuple(symbol_info(ticker=d['_id'], isin=d['isin'], name=d['name']) for d in data)
+        return tuple(SymbolInformation(ticker=d['_id'], isin=d['isin'], name=d['name']) for d in data)
+
+    def clean_old_symbols(self) -> None:
+        try:
+            data = self.collection.find({})
+        except PyMongoError as e:
+            st.logger.exception(e)
+            raise RepositoryException
+
+        date_limit = datetime.utcnow().date() - timedelta(days=5)
+        symbols_to_delete = []
+        for symbol in data:
+            if symbol['date'].date() < date_limit:
+                symbols_to_delete.append(symbol['ticker'])
+
+        if not symbols_to_delete:
+            return
+        try:
+            st.logger("Cleaning symbols with tickers: {}".format(symbols_to_delete))
+            self.collection.delete_many({"_id": {"$in": symbols_to_delete}})
+        except PyMongoError as e:
+            st.logger.exception(e)
+            raise RepositoryException
 
     @classmethod
     def __connect_to_db(cls):

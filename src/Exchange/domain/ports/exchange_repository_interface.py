@@ -6,8 +6,10 @@ from src.Exchange.domain.exchange import Exchange
 class ExchangeRepositoryInterface(metaclass=ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
-        return (hasattr(subclass, 'save_tickers') and
-                callable(subclass.execute)) or NotImplemented
+        return (hasattr(subclass, 'save_exchange') and
+                callable(subclass.save_exchange) and
+                hasattr(subclass, 'get_exchanges') and
+                callable(subclass.get_exchanges)) or NotImplemented
 
     @abstractmethod
     def save_exchange(self, exchange: Exchange):

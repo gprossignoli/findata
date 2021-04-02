@@ -15,23 +15,22 @@ class MongoAdapter(ExchangeRepositoryInterface):
 
     def __init__(self):
         self.__connect_to_db()
+        self.collection = self.__db_client['findata']['exchanges']
 
     def save_exchange(self, exchange: Exchange) -> None:
-        collection = self.__db_client['findata']['exchanges']
         doc_filter = {'_id': exchange.ticker}
         doc_values = {"$set": {"tickers": exchange.symbols,
                                "date": datetime.utcnow()}}
 
         try:
-            collection.update_one(filter=doc_filter, update=doc_values, upsert=True)
+            self.collection.update_one(filter=doc_filter, update=doc_values, upsert=True)
         except PyMongoError as e:
             st.logger.exception(e)
             raise RepositoryException()
         st.logger.info(f'{exchange.ticker} updated')
 
     def get_exchanges(self) -> tuple[Exchange, ...]:
-        collection = self.__db_client['findata']['exchanges']
-        data = collection.find({})
+        data = self.collection.find({})
         exchanges = [Exchange(ticker=d['_id'], symbols=d['tickers']) for d in data]
         return tuple(exchanges)
 

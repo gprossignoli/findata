@@ -8,8 +8,6 @@ from src.Symbol.domain.ports.symbol_publisher_interface import SymbolPublisherIn
 from src.Symbol.domain.ports.symbol_repository_interface import SymbolRepositoryInterface
 from src.Symbol.domain.symbol import Symbol
 
-symbol_information = namedtuple("symbol_information", "ticker, name, isin")
-
 
 class SymbolServiceInterface(metaclass=ABCMeta):
     @classmethod

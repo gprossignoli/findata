@@ -18,7 +18,7 @@ class ObtainExchangeTickersUseCase(UseCaseInterface):
     @staticmethod
     def execute_with_scheduler(scheduler: BackgroundScheduler):
         scheduler.add_job(ScraperAdapter(repository=MongoAdapter()).fetch_stocks,
-                          'cron', day_of_week='mon',
-                          hour=4, minute=30, kwargs={"exchanges": st.exchanges},
+                          'cron', day_of_week='sat',
+                          hour=3, minute=30, kwargs={"exchanges": st.exchanges},
                           misfire_grace_time=None)
         scheduler.start()

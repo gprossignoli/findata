@@ -5,9 +5,9 @@ import pandas as pd
 from yfinance import Tickers as yf_tickers
 from yfinance import Ticker as yf_ticker_info
 
-from src.Symbol.domain.symbol import Symbol
+from src.Symbol.domain.symbol import Symbol, SymbolInformation
 from src.Symbol.infraestructure.rabbitmq_publisher_adapter import RabbitException
-from src.Symbol.domain.ports.symbol_service_interface import SymbolServiceInterface, symbol_information
+from src.Symbol.domain.ports.symbol_service_interface import SymbolServiceInterface
 from src.Utils.exceptions import RepositoryException, DomainServiceException
 from src import settings as st
 
@@ -47,6 +47,7 @@ class YFinanceAdapter(SymbolServiceInterface):
             if exchange.symbols:
                 st.logger.info("Fetching symbols information for exchange: {}".format(exchange.ticker))
                 self.__fetch_symbols_info(symbol_tickers=exchange.symbols)
+        self.symbols_repository.clean_old_symbols()
 
     def publish_symbols(self, symbols: tuple[Symbol, ...]) -> None:
         try:
@@ -80,7 +81,7 @@ class YFinanceAdapter(SymbolServiceInterface):
                         st.logger.info("Discarding symbol: {}".format(ticker))
                     else:
                         name = self.__format_name_field(name)
-                        symbols.append(symbol_information(ticker=ticker, name=name, isin=isin))
+                        symbols.append(SymbolInformation(ticker=ticker, name=name, isin=isin))
                 except Exception as e:
                     st.logger.exception(e)
                 time.sleep(1)
@@ -110,11 +111,11 @@ class YFinanceAdapter(SymbolServiceInterface):
                 hist_data[symbol].columns = hist_data[symbol].columns.droplevel(1)
         return hist_data
 
-    def __get_symbols_info(self) -> tuple[symbol_information]:
+    def __get_symbols_info(self) -> tuple[SymbolInformation]:
         symbols_info = self.symbols_repository.get_symbols_info()
-        return tuple(symbol_information(ticker=getattr(s, 'ticker'),
-                                        name=getattr(s, 'name'),
-                                        isin=getattr(s, 'isin')) for s in symbols_info)
+        return tuple(SymbolInformation(ticker=getattr(s, 'ticker'),
+                                       name=getattr(s, 'name'),
+                                       isin=getattr(s, 'isin')) for s in symbols_info)
 
     @staticmethod
     def __get_chunks(symbols_tickers: tuple[str, ...]) -> tuple[tuple[str, ...]]:

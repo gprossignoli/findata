@@ -9,3 +9,10 @@ class Symbol:
     isin: str
     name: str
     historical_data: DataFrame
+
+
+@dataclass
+class SymbolInformation:
+    ticker: str
+    isin: str
+    name: str
