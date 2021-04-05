@@ -13,9 +13,12 @@ class RabbitException(Exception):
 
 class RabbitmqPublisherAdapter(SymbolPublisherInterface):
     def __init__(self):
-        self.connection = self.__connect_to_rabbit()
+        self.connection = None
 
     def publish_symbols(self, symbols: tuple[Symbol, ...]) -> None:
+        if self.connection is None:
+            self.connection = self.__connect_to_rabbit()
+
         st.logger.info("Publishing symbols: {}".format([s.ticker for s in symbols]))
         conn_channel = self.connection.channel()
         for symbol in symbols:
@@ -42,8 +45,10 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
         st.logger.info("Connecting to rabbitmq")
         credentials = PlainCredentials(username=st.RABBIT_USER, password=st.RABBIT_PASSW)
         connection = BlockingConnection(
-            ConnectionParameters(host=st.MONGO_HOST, port=st.RABBIT_PORT,
-                                 virtual_host=st.RABBIT_VHOST, credentials=credentials))
+            ConnectionParameters(host=st.RABBIT_HOST, port=st.RABBIT_PORT,
+                                 virtual_host=st.RABBIT_VHOST, credentials=credentials,
+                                 connection_attempts=5,
+                                 retry_delay=3))
         channel = connection.channel()
 
         try:
@@ -56,4 +61,3 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
     @staticmethod
     def __adapt_symbol_historic(historical_data):
         return historical_data.to_dict()
-

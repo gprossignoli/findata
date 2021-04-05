@@ -13,12 +13,12 @@ class ObtainExchangeTickersUseCase(UseCaseInterface):
         into a mongo collection.
         """
 
-        ScraperAdapter(repository=MongoAdapter()).fetch_stocks(st.exchanges)
+        ScraperAdapter(repository=MongoAdapter()).fetch_stocks(exchange_tickers=st.exchanges)
 
     @staticmethod
     def execute_with_scheduler(scheduler: BackgroundScheduler):
         scheduler.add_job(ScraperAdapter(repository=MongoAdapter()).fetch_stocks,
                           'cron', day_of_week='sat',
-                          hour=3, minute=30, kwargs={"exchanges": st.exchanges},
+                          hour=3, minute=30, kwargs={"exchange_tickers": st.exchanges},
                           misfire_grace_time=None)
-        scheduler.start()
+

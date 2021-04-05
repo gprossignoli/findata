@@ -31,7 +31,6 @@ class FetchSymbolsData(UseCaseInterface):
                           'cron', day_of_week='mon',
                           hour=4, minute=30,
                           misfire_grace_time=None)
-        scheduler.start()
 
 
 class FetchSymbolsInfo(UseCaseInterface):
@@ -53,4 +52,3 @@ class FetchSymbolsInfo(UseCaseInterface):
                           'cron', day_of_week='sun',
                           hour=3, minute=30,
                           misfire_grace_time=None)
-        scheduler.start()

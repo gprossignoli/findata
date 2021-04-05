@@ -72,7 +72,7 @@ class MongoAdapter(SymbolRepositoryInterface):
         if cls.__db_client is None:
             try:
                 st.logger.info("Connecting to mongodb database.")
-                cls.__db_client = MongoClient(f'mongodb://{st.MONGO_HOST}:{st.MONGO_PORT}/')
+                cls.__db_client = MongoClient(f'mongodb://{st.MONGO_HOST}:{st.MONGO_PORT}/', connect=False)
                 # Forces a connection status check
                 cls.__db_client.server_info()
             except PyMongoError as e:

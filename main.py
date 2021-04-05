@@ -8,9 +8,12 @@ from src import settings as st
 
 if __name__ == '__main__':
     scheduler = BackgroundScheduler(logger=st.logger)
+
     ObtainExchangeTickersUseCase().execute_with_scheduler(scheduler)
     FetchSymbolsInfo().execute_with_scheduler(scheduler)
     FetchSymbolsData().execute_with_scheduler(scheduler)
+
+    scheduler.start()
     while True:
         time.sleep(60)
         pass

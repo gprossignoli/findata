@@ -19,26 +19,26 @@ class ScraperAdapter(ExchangeServiceInterface):
     def create_exchange_entity(self, ticker: str, symbols: tuple[str, ...]) -> Exchange:
         return Exchange(ticker=ticker, symbols=symbols)
 
-    def fetch_stocks(self, exchanges: tuple[str, ...]):
-        st.logger.info("Fetching stocks for the following exchanges: {}".format(exchanges))
-        for exchange in exchanges:
+    def fetch_stocks(self, exchange_tickers: tuple[str, ...]):
+        st.logger.info("Fetching stocks for the following exchanges: {}".format(exchange_tickers))
+        for ticker in exchange_tickers:
             try:
-                tickers = self.__fetch_symbols(exchange)
+                tickers = self.__fetch_symbols(ticker)
             except DomainServiceException:
                 raise RepositoryException()
 
-            exchange = self.create_exchange_entity(ticker=exchange, symbols=tickers)
-            st.logger.info("Saving the information of the exchange: {}".format(exchange))
+            exchange = self.create_exchange_entity(ticker=ticker, symbols=tickers)
+            st.logger.info("Saving the information of the exchange: {}".format(ticker))
             try:
                 self.repository.save_exchange(exchange)
             except RepositoryException:
                 raise DomainServiceException()
 
     @staticmethod
-    def __fetch_symbols(exchange):
+    def __fetch_symbols(ticker: str) -> tuple[str, ...]:
         try:
             req = HttpRequest(status_forcelist=[300, 301, 400, 401, 403, 404, 408, 500, 502, 503])\
-                .get(url=f'https://es.finance.yahoo.com/quote/{exchange}/components', timeout=15)
+                .get(url=f'https://es.finance.yahoo.com/quote/{ticker}/components', timeout=15)
         except HttpRequestException as e:
             raise DomainServiceException()
 
