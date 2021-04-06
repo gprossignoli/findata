@@ -14,7 +14,7 @@ from src import settings as st
 
 class YFinanceAdapter(SymbolServiceInterface):
 
-    def fetch_all_symbols(self, period: str = 'max', actions: bool = False) -> tuple[Symbol, ...]:
+    def fetch_all_symbols(self, period: str = 'max', actions: bool = True) -> tuple[Symbol, ...]:
         """
         Fetch all symbol historic data from yahoo finance, using yfinance library
         and adds it to its info from the db
@@ -100,15 +100,17 @@ class YFinanceAdapter(SymbolServiceInterface):
         return name
 
     def __get_symbols_historic(self, symbols_tickers: tuple[str, ...], period: str = 'max',
-                               actions: bool = False) -> dict[str, pd.DataFrame]:
+                               actions: bool = True) -> dict[str, pd.DataFrame]:
         chunks = self.__get_chunks(symbols_tickers)
 
         hist_data = dict().fromkeys(symbols_tickers)
         for chunk in chunks:
-            chunk_data = yf_tickers(tickers=list(chunk)).history(period=period, actions=actions)
+            chunk_data = yf_tickers(tickers=list(chunk[:10])).history(period=period, actions=actions)
             for symbol in chunk:
                 hist_data[symbol] = chunk_data.filter(like=symbol, axis=1)
                 hist_data[symbol].columns = hist_data[symbol].columns.droplevel(1)
+                if actions:
+                    hist_data[symbol] = hist_data[symbol].drop(columns=['Stock Splits'])
         return hist_data
 
     def __get_symbols_info(self) -> tuple[SymbolInformation]:
