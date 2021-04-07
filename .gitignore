@@ -2,8 +2,6 @@
 .idea
 requirements_priv.txt
 settings.ini
-findata.log
-findata_errors.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
