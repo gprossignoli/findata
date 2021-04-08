@@ -22,10 +22,7 @@ class ScraperAdapter(ExchangeServiceInterface):
     def fetch_stocks(self, exchange_tickers: tuple[str, ...]):
         st.logger.info("Fetching stocks for the following exchanges: {}".format(exchange_tickers))
         for ticker in exchange_tickers:
-            try:
-                tickers = self.__fetch_symbols(ticker)
-            except DomainServiceException:
-                raise RepositoryException()
+            tickers = self.__fetch_symbols(ticker)
 
             exchange = self.create_exchange_entity(ticker=ticker, symbols=tickers)
             st.logger.info("Saving the information of the exchange: {}".format(ticker))

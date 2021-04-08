@@ -6,9 +6,8 @@ from yfinance import Tickers as yf_tickers
 from yfinance import Ticker as yf_ticker_info
 
 from src.Symbol.domain.symbol import Symbol, SymbolInformation
-from src.Symbol.infraestructure.rabbitmq_publisher_adapter import RabbitException
 from src.Symbol.domain.ports.symbol_service_interface import SymbolServiceInterface
-from src.Utils.exceptions import RepositoryException, DomainServiceException
+from src.Utils.exceptions import RepositoryException, DomainServiceException, PublisherException
 from src import settings as st
 
 
@@ -23,7 +22,7 @@ class YFinanceAdapter(SymbolServiceInterface):
         :return: information of each symbol
         """
         try:
-            symbols_info = self.symbols_repository.get_symbols_info()
+            symbols_info = self.symbols_repository.get_symbols_info()[:2]
         except RepositoryException:
             raise DomainServiceException()
         symbols_tickers = [getattr(s, 'ticker') for s in symbols_info]
@@ -52,7 +51,7 @@ class YFinanceAdapter(SymbolServiceInterface):
     def publish_symbols(self, symbols: tuple[Symbol, ...]) -> None:
         try:
             self.publisher.publish_symbols(symbols)
-        except RabbitException:
+        except PublisherException:
             raise DomainServiceException()
 
     def create_symbol_entity(self, ticker: str, historical_data: pd.DataFrame, name: str = None, isin: str = None):

@@ -4,3 +4,7 @@ class RepositoryException(Exception):
 
 class DomainServiceException(Exception):
     pass
+
+
+class PublisherException(Exception):
+    pass
