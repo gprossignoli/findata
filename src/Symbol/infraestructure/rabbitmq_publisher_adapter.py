@@ -30,7 +30,8 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
             }
             message = ujson.dumps(message)
             try:
-                conn_channel.basic_publish(exchange=st.SYMBOLS_HISTORY_EXCHANGE, routing_key='findata.symbol',
+                conn_channel.basic_publish(exchange=st.SYMBOLS_HISTORY_EXCHANGE,
+                                           routing_key=st.SYMBOLS_HISTORY_ROUTING_KEY,
                                            body=message)
             except Exception as e:
                 st.logger.exception(e)
