@@ -11,8 +11,8 @@ from src import settings as st
 class FetchSymbolsData(UseCaseInterface):
     def execute(self):
         """
-        This use case fetches for tickers that compounds each stock exchange and then saves it
-        into a mongo collection.
+        This use case fetches for information and financial data of symbols that compounds
+        the exchanges fetched previosly.
         """
         st.logger.info("Executing fetch symbols use case.")
         symbols_domain_service = YFinanceAdapter(symbols_repository=MongoSymbolsAdapter(),
@@ -36,7 +36,8 @@ class FetchSymbolsData(UseCaseInterface):
 class FetchSymbolsInfo(UseCaseInterface):
     def execute(self):
         """
-        This use case looks up the information on the symbols and then persist them.
+        This use case looks up the information, such as isin, name, etc, of symbols that compounds
+        the exchanges fetched previosly.
         """
         st.logger.info("Executing fetch symbols info use case.")
         symbols_domain_service = YFinanceAdapter(symbols_repository=MongoSymbolsAdapter(),
