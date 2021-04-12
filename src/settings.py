@@ -49,4 +49,4 @@ RABBIT_PASSW = config.get("RABBIT", "rabbit_password")
 RABBIT_VHOST = config.get("RABBIT", "rabbit_vhost")
 
 SYMBOLS_HISTORY_EXCHANGE = 'findata_symbols'
-SYMBOLS_HISTORY_ROUTING_KEY = 'findata.symbols'
+SYMBOLS_HISTORY_ROUTING_KEY = 'findata.symbol.all_historic'
