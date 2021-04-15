@@ -33,14 +33,24 @@ class MongoAdapter(SymbolRepositoryInterface):
                 st.logger.info("Symbol info for {} not updated due to an error".format(getattr(symbol, 'ticker')))
                 continue
 
-    def get_symbols_info(self) -> tuple[SymbolInformation, ...]:
+    def get_indexes_info(self) -> tuple[SymbolInformation]:
+        try:
+            data = self.collection.find({"_id": {"$in": st.exchanges}})
+        except PyMongoError as e:
+            st.logger.exception(e)
+            raise RepositoryException
+
+        return tuple(SymbolInformation(ticker=d['_id'], isin=d['isin'], name=d['name']) for d in data)
+
+    def get_symbols_info(self) -> tuple[SymbolInformation]:
         try:
             data = self.collection.find({})
         except PyMongoError as e:
             st.logger.exception(e)
             raise RepositoryException
 
-        return tuple(SymbolInformation(ticker=d['_id'], isin=d['isin'], name=d['name']) for d in data)
+        return tuple(SymbolInformation(ticker=d['_id'], isin=d['isin'], name=d['name']) for d in data
+                     if d['_id'] not in st.exchanges)
 
     def clean_old_symbols(self) -> None:
         try:
@@ -53,12 +63,12 @@ class MongoAdapter(SymbolRepositoryInterface):
         symbols_to_delete = []
         for symbol in data:
             if symbol['date'].date() < date_limit:
-                symbols_to_delete.append(symbol['ticker'])
+                symbols_to_delete.append(symbol['_id'])
 
         if not symbols_to_delete:
             return
         try:
-            st.logger("Cleaning symbols with tickers: {}".format(symbols_to_delete))
+            st.logger.info("Cleaning symbols with tickers: {}".format(symbols_to_delete))
             self.collection.delete_many({"_id": {"$in": symbols_to_delete}})
         except PyMongoError as e:
             st.logger.exception(e)

@@ -33,6 +33,30 @@ class FetchSymbolsData(UseCaseInterface):
                           misfire_grace_time=None)
 
 
+class FetchIndexesData(UseCaseInterface):
+    def execute(self):
+        """
+        This use case fetches for information and financial data of the market indexes.
+        """
+        st.logger.info("Executing fetch symbols use case.")
+        symbols_service = YFinanceAdapter(symbols_repository=MongoSymbolsAdapter(),
+                                          exchanges_repository=MongoExchangesAdapter(),
+                                          publisher=RabbitmqPublisherAdapter())
+        indexes = symbols_service.fetch_indexes()
+        symbols_service.publish_indexes(indexes)
+        st.logger.info("Fetch symbols use case finished.")
+
+    @staticmethod
+    def execute_with_scheduler(scheduler: BackgroundScheduler):
+        scheduler.add_job(YFinanceAdapter(symbols_repository=MongoSymbolsAdapter(),
+                                          exchanges_repository=MongoExchangesAdapter(),
+                                          publisher=RabbitmqPublisherAdapter())
+                          .fetch_indexes,
+                          'cron', day_of_week='mon',
+                          hour=3, minute=30,
+                          misfire_grace_time=None)
+
+
 class FetchSymbolsInfo(UseCaseInterface):
     def execute(self):
         """
@@ -53,3 +77,4 @@ class FetchSymbolsInfo(UseCaseInterface):
                           'cron', day_of_week='sun',
                           hour=3, minute=30,
                           misfire_grace_time=None)
+

@@ -37,6 +37,29 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
                 st.logger.exception(e)
                 pass
 
+    def publish_indexes(self, indexes: tuple[Symbol, ...]) -> None:
+        if self.connection is None:
+            self.connection = self.__connect_to_rabbit()
+
+        st.logger.info("Publishing indexes: {}".format([s.ticker for s in indexes]))
+        conn_channel = self.connection.channel()
+        for index in indexes:
+            adapted_historic = self.__adapt_index_historic(index.historical_data)
+            message = {
+                'ticker': index.ticker,
+                'isin': index.isin,
+                'name': index.name,
+                'historic': adapted_historic
+            }
+            message = ujson.dumps(message)
+            try:
+                conn_channel.basic_publish(exchange=st.SYMBOLS_HISTORY_EXCHANGE,
+                                           routing_key=st.INDEXES_HISTORY_ROUTING_KEY,
+                                           body=message)
+            except Exception as e:
+                st.logger.exception(e)
+                pass
+
     @staticmethod
     def __connect_to_rabbit() -> BlockingConnection:
         """
@@ -67,4 +90,10 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
     def __adapt_symbol_historic(historical_data):
         historical_data = historical_data.rename(columns={"Open": "open", "Close": "close", "High": "high",
                                                           "Low": "low", "Dividends": "dividends", "Volume": "volume"})
+        return historical_data.to_dict()
+
+    @staticmethod
+    def __adapt_index_historic(historical_data):
+        historical_data = historical_data.rename(columns={"Open": "open", "Close": "close", "High": "high",
+                                                          "Low": "low"})
         return historical_data.to_dict()

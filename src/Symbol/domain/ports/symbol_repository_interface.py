@@ -9,6 +9,8 @@ class SymbolRepositoryInterface(metaclass=ABCMeta):
     def __subclasshook__(cls, subclass):
         return (hasattr(subclass, 'save_symbols_info') and
                 callable(subclass.save_symbols_info) and
+                hasattr(subclass, 'get_indexes_info') and
+                callable(subclass.get_indexes_info) and
                 hasattr(subclass, 'get_symbols_info') and
                 callable(subclass.get_symbols_info) and
                 hasattr(subclass, 'clean_old_symbols') and
@@ -20,6 +22,14 @@ class SymbolRepositoryInterface(metaclass=ABCMeta):
         """
         Fetches each symbol name, isin and historical data
         :param symbols: Ticker, isin and name of each symbol
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def get_indexes_info(self) -> tuple[SymbolInformation]:
+        """
+        Gets the indexes info from the db.
+        :return: all symbols info.
         """
         raise NotImplemented
 

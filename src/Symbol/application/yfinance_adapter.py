@@ -22,7 +22,7 @@ class YFinanceAdapter(SymbolServiceInterface):
         :return: information of each symbol
         """
         try:
-            symbols_info = self.symbols_repository.get_symbols_info()[:2]
+            symbols_info = self.symbols_repository.get_symbols_info()
         except RepositoryException:
             raise DomainServiceException()
         symbols_tickers = [getattr(s, 'ticker') for s in symbols_info]
@@ -44,13 +44,47 @@ class YFinanceAdapter(SymbolServiceInterface):
         exchanges = self.exchanges_repository.get_exchanges()
         for exchange in exchanges:
             if exchange.symbols:
+                symbols = list(exchange.symbols)
+                symbols.append(exchange.ticker)
                 st.logger.info("Fetching symbols information for exchange: {}".format(exchange.ticker))
-                self.__fetch_symbols_info(symbol_tickers=exchange.symbols)
+                self.__fetch_symbols_info(symbol_tickers=tuple(symbols))
         self.symbols_repository.clean_old_symbols()
+
+    def fetch_indexes(self, period: str = 'max') -> tuple[Symbol, ...]:
+        """
+        Fetch all indexes historic data from yahoo finance, using yfinance library
+        and adds it to its info from the db
+        :param period: time frame in which to collect the data
+        :return: information of each symbol
+        """
+        try:
+            indexes_info = self.symbols_repository.get_indexes_info()
+        except RepositoryException:
+            raise DomainServiceException()
+        indexes_tickers = [getattr(s, 'ticker') for s in indexes_info]
+
+        st.logger.info("Getting historic of {} indexes with tickers: {}".format(len(indexes_tickers), indexes_tickers))
+
+        indexes_history = self.__get_symbols_historic(symbols_tickers=tuple(indexes_tickers), period=period,
+                                                      actions=False)
+        del indexes_tickers
+
+        indexes_data = list()
+        for symbol in indexes_info:
+            indexes_data.append(self.create_symbol_entity(ticker=getattr(symbol, 'ticker'),
+                                                          historical_data=indexes_history[getattr(symbol, 'ticker')],
+                                                          name=getattr(symbol, 'name'), isin=getattr(symbol, 'isin')))
+        return tuple(indexes_data)
 
     def publish_symbols(self, symbols: tuple[Symbol, ...]) -> None:
         try:
             self.publisher.publish_symbols(symbols)
+        except PublisherException:
+            raise DomainServiceException()
+
+    def publish_indexes(self, symbols: tuple[Symbol, ...]) -> None:
+        try:
+            self.publisher.publish_indexes(symbols)
         except PublisherException:
             raise DomainServiceException()
 
@@ -76,7 +110,7 @@ class YFinanceAdapter(SymbolServiceInterface):
                         name = symbol_data.info.get('longName', '-')
                     isin = symbol_data.isin
 
-                    if name == '-' or isin == '-':
+                    if name == '-' or isin == '-' and ticker not in st.exchanges:
                         st.logger.info("Discarding symbol: {}".format(ticker))
                     else:
                         name = self.__format_name_field(name)
