@@ -138,12 +138,15 @@ class YFinanceAdapter(SymbolServiceInterface):
 
         hist_data = dict().fromkeys(symbols_tickers)
         for chunk in chunks:
-            chunk_data = yf_tickers(tickers=list(chunk[:10])).history(period=period, actions=actions)
+            chunk_data = yf_tickers(tickers=list(chunk)).history(period=period, actions=actions)
             for symbol in chunk:
                 hist_data[symbol] = chunk_data.filter(like=symbol, axis=1)
                 hist_data[symbol].columns = hist_data[symbol].columns.droplevel(1)
                 if actions:
-                    hist_data[symbol] = hist_data[symbol].drop(columns=['Stock Splits'])
+                    try:
+                        hist_data[symbol] = hist_data[symbol].drop(columns=['Stock Splits'])
+                    except KeyError:
+                        pass
         return hist_data
 
     def __get_symbols_info(self) -> tuple[SymbolInformation]:
