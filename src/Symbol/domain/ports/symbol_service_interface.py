@@ -54,6 +54,5 @@ class SymbolServiceInterface(metaclass=ABCMeta):
         raise NotImplemented
 
     @abstractmethod
-    def create_symbol_entity(self, ticker: str, historical_data: DataFrame, name: str = None,
-                             isin: str = None) -> Symbol:
+    def create_symbol_entity(self, **kwargs) -> Symbol:
         raise NotImplemented

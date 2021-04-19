@@ -1,7 +1,7 @@
 import typing
 from abc import ABCMeta, abstractmethod
 
-from src.Symbol.domain.symbol import SymbolInformation
+from src.Symbol.domain.symbol import SymbolInformation, IndexInformation
 
 
 class SymbolRepositoryInterface(metaclass=ABCMeta):
@@ -26,7 +26,7 @@ class SymbolRepositoryInterface(metaclass=ABCMeta):
         raise NotImplemented
 
     @abstractmethod
-    def get_indexes_info(self) -> tuple[SymbolInformation]:
+    def get_indexes_info(self) -> tuple[IndexInformation]:
         """
         Gets the indexes info from the db.
         :return: all symbols info.

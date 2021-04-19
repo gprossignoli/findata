@@ -5,7 +5,7 @@ from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
 from src.Symbol.domain.ports.symbol_repository_interface import SymbolRepositoryInterface
-from src.Symbol.domain.symbol import SymbolInformation
+from src.Symbol.domain.symbol import SymbolInformation, IndexInformation
 from src.Utils.exceptions import RepositoryException
 from src import settings as st
 
@@ -24,6 +24,7 @@ class MongoAdapter(SymbolRepositoryInterface):
             doc_filter = {'_id': getattr(symbol, 'ticker')}
             doc_values = {"$set": {"isin": getattr(symbol, 'isin'),
                                    "name": getattr(symbol, 'name'),
+                                   "exchange": getattr(symbol, 'exchange'),
                                    "date": datetime.utcnow()}}
 
             try:
@@ -33,14 +34,14 @@ class MongoAdapter(SymbolRepositoryInterface):
                 st.logger.info("Symbol info for {} not updated due to an error".format(getattr(symbol, 'ticker')))
                 continue
 
-    def get_indexes_info(self) -> tuple[SymbolInformation]:
+    def get_indexes_info(self) -> tuple[IndexInformation]:
         try:
             data = self.collection.find({"_id": {"$in": st.exchanges}})
         except PyMongoError as e:
             st.logger.exception(e)
             raise RepositoryException
 
-        return tuple(SymbolInformation(ticker=d['_id'], isin=d['isin'], name=d['name']) for d in data)
+        return tuple(IndexInformation(ticker=d['_id'], isin=d['isin'], name=d['name']) for d in data)
 
     def get_symbols_info(self) -> tuple[SymbolInformation]:
         try:
@@ -49,7 +50,7 @@ class MongoAdapter(SymbolRepositoryInterface):
             st.logger.exception(e)
             raise RepositoryException
 
-        return tuple(SymbolInformation(ticker=d['_id'], isin=d['isin'], name=d['name']) for d in data
+        return tuple(SymbolInformation(ticker=d['_id'], isin=d['isin'], name=d['name'], exchange=d['exchange']) for d in data
                      if d['_id'] not in st.exchanges)
 
     def clean_old_symbols(self) -> None:

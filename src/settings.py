@@ -38,8 +38,8 @@ logger.addHandler(info_logger)
 logger.addHandler(error_logger)
 
 # ObtainExchangeTickersUseCase
-# Ibex35, S&P500, Dow Jones, Nasdaq, Euro stoxx50, EURONEXT100.
-exchanges = ('^IBEX', '^GSPC', '^DJI', '^IXIC', '^STOXX50E', '^N100')
+# Ibex35, S&P500, Dow Jones, Nasdaq, Euro stoxx50, EURONEXT100, IBEX Medium Cap.
+exchanges = ('^IBEX', '^GSPC', '^DJI', '^IXIC', '^STOXX50E', '^N100', 'INDC.MC')
 
 # Rabbitmq data
 RABBIT_HOST = config.get("RABBIT", "rabbit_host")
@@ -49,5 +49,6 @@ RABBIT_PASSW = config.get("RABBIT", "rabbit_password")
 RABBIT_VHOST = config.get("RABBIT", "rabbit_vhost")
 
 SYMBOLS_HISTORY_EXCHANGE = 'findata_symbols'
-SYMBOLS_HISTORY_ROUTING_KEY = 'findata.symbol.all_historic'
+SYMBOL_HISTORY_ROUTING_KEY = 'findata.symbol'
+STOCKS_HISTORY_ROUTING_KEY = 'findata.symbol.stock'
 INDEXES_HISTORY_ROUTING_KEY = 'findata.symbol.index'

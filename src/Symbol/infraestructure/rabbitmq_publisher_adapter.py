@@ -4,7 +4,7 @@ from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import AMQPConnectionError, AMQPChannelError
 import ujson
 
-from src.Symbol.domain.symbol import Symbol
+from src.Symbol.domain.symbol import Symbol, Stock
 from src.Symbol.domain.ports.symbol_publisher_interface import SymbolPublisherInterface
 from src.Utils.exceptions import PublisherException
 from src import settings as st
@@ -21,17 +21,28 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
         st.logger.info("Publishing symbols: {}".format([s.ticker for s in symbols]))
         conn_channel = self.connection.channel()
         for symbol in symbols:
-            adapted_historic = self.__adapt_symbol_historic(symbol.historical_data)
-            message = {
-                'ticker': symbol.ticker,
-                'isin': symbol.isin,
-                'name': symbol.name,
-                'historic': adapted_historic
-            }
+            adapted_historic = self.__adapt_stock_historic(symbol.historical_data)
+            if isinstance(symbol, Stock):
+                message = {
+                    'ticker': symbol.ticker,
+                    'isin': symbol.isin,
+                    'name': symbol.name,
+                    'historic': adapted_historic,
+                    'exchange': symbol.exchange
+                }
+                routing_key = st.STOCKS_HISTORY_ROUTING_KEY
+            else:
+                message = {
+                    'ticker': symbol.ticker,
+                    'isin': symbol.isin,
+                    'name': symbol.name,
+                    'historic': adapted_historic
+                }
+                routing_key = st.SYMBOL_HISTORY_ROUTING_KEY
             message = ujson.dumps(message)
             try:
                 conn_channel.basic_publish(exchange=st.SYMBOLS_HISTORY_EXCHANGE,
-                                           routing_key=st.SYMBOLS_HISTORY_ROUTING_KEY,
+                                           routing_key=routing_key,
                                            body=message)
             except Exception as e:
                 st.logger.exception(e)
@@ -87,7 +98,7 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
         return connection
 
     @staticmethod
-    def __adapt_symbol_historic(historical_data):
+    def __adapt_stock_historic(historical_data):
         historical_data = historical_data.rename(columns={"Open": "open", "Close": "close", "High": "high",
                                                           "Low": "low", "Dividends": "dividends", "Volume": "volume"})
         return historical_data.to_dict()

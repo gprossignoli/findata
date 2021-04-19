@@ -12,7 +12,20 @@ class Symbol:
 
 
 @dataclass
+class Stock(Symbol):
+    exchange: str
+
+
+@dataclass
 class SymbolInformation:
+    ticker: str
+    isin: str
+    name: str
+    exchange: str
+
+
+@dataclass
+class IndexInformation:
     ticker: str
     isin: str
     name: str
