@@ -5,7 +5,7 @@ import pandas as pd
 from yfinance import Tickers as yf_tickers
 from yfinance import Ticker as yf_ticker_info
 
-from src.Symbol.domain.symbol import Symbol, SymbolInformation, Stock
+from src.Symbol.domain.symbol import Symbol, SymbolInformation, Stock, IndexInformation
 from src.Symbol.domain.ports.symbol_service_interface import SymbolServiceInterface
 from src.Utils.exceptions import RepositoryException, DomainServiceException, PublisherException
 from src import settings as st
@@ -46,6 +46,7 @@ class YFinanceAdapter(SymbolServiceInterface):
         for exchange in exchanges:
             if exchange.symbols:
                 symbols = list(exchange.symbols)
+                symbols.append(exchange.ticker)
                 st.logger.info("Fetching symbols information for exchange: {}".format(exchange.ticker))
                 self.__fetch_symbols_info(symbol_tickers=tuple(symbols), exchange_ticker=exchange.ticker)
         self.symbols_repository.clean_old_symbols()
@@ -73,7 +74,7 @@ class YFinanceAdapter(SymbolServiceInterface):
         for symbol in indexes_info:
             indexes_data.append(self.create_symbol_entity(ticker=getattr(symbol, 'ticker'),
                                                           historical_data=indexes_history[getattr(symbol, 'ticker')],
-                                                          name=getattr(symbol, 'name'), isin=getattr(symbol, 'isin')))
+                                                          name=getattr(symbol, 'name')))
         return tuple(indexes_data)
 
     def publish_symbols(self, symbols: tuple[Symbol, ...]) -> None:
@@ -89,13 +90,13 @@ class YFinanceAdapter(SymbolServiceInterface):
             raise DomainServiceException()
 
     def create_symbol_entity(self, ticker: str, historical_data: pd.DataFrame, name: str,
-                             isin: str, exchange: str = None):
+                             isin: str = None, exchange: str = None):
         # Holes gets filled with the previous data,
         # and it discards all the indexes until the first valid index
         historical_data = historical_data.fillna(method='ffill').dropna()
         if exchange is not None:
             return Stock(ticker=ticker, name=name, isin=isin, historical_data=historical_data, exchange=exchange)
-        return Symbol(ticker=ticker, name=name, isin=isin, historical_data=historical_data)
+        return Symbol(ticker=ticker, name=name, historical_data=historical_data)
 
     def __fetch_symbols_info(self, symbol_tickers: tuple[str, ...], exchange_ticker: str) -> None:
         """
@@ -111,13 +112,20 @@ class YFinanceAdapter(SymbolServiceInterface):
                     name = symbol_data.info.get('shortName')
                     if name is None:
                         name = symbol_data.info.get('longName', '-')
-                    isin = symbol_data.isin
-
-                    if name == '-' or isin == '-':
-                        st.logger.info("Discarding symbol: {}".format(ticker))
+                    if ticker in st.exchanges:
+                        if name == '-':
+                            st.logger.info("Discarding symbol: {}".format(ticker))
+                        else:
+                            name = self.__format_name_field(name)
+                            symbols.append(IndexInformation(ticker=ticker, name=name))
                     else:
-                        name = self.__format_name_field(name)
-                        symbols.append(SymbolInformation(ticker=ticker, name=name, isin=isin, exchange=exchange_ticker))
+                        isin = symbol_data.isin
+                        if name == '-' or isin == '-':
+                            st.logger.info("Discarding symbol: {}".format(ticker))
+                        else:
+                            name = self.__format_name_field(name)
+                            symbols.append(SymbolInformation(ticker=ticker, name=name, isin=isin,
+                                                             exchange=exchange_ticker))
                 except Exception as e:
                     st.logger.exception(e)
                 time.sleep(1)

@@ -34,7 +34,6 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
             else:
                 message = {
                     'ticker': symbol.ticker,
-                    'isin': symbol.isin,
                     'name': symbol.name,
                     'historic': adapted_historic
                 }
@@ -58,7 +57,6 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
             adapted_historic = self.__adapt_index_historic(index.historical_data)
             message = {
                 'ticker': index.ticker,
-                'isin': index.isin,
                 'name': index.name,
                 'historic': adapted_historic
             }

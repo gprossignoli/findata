@@ -6,13 +6,13 @@ from pandas import DataFrame
 @dataclass
 class Symbol:
     ticker: str
-    isin: str
     name: str
     historical_data: DataFrame
 
 
 @dataclass
 class Stock(Symbol):
+    isin: str
     exchange: str
 
 
@@ -27,5 +27,4 @@ class SymbolInformation:
 @dataclass
 class IndexInformation:
     ticker: str
-    isin: str
     name: str

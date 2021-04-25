@@ -18,15 +18,18 @@ class MongoAdapter(SymbolRepositoryInterface):
         self.__connect_to_db()
         self.collection = self.__db_client['findata']['symbols']
 
-    def save_symbols_info(self, symbols: tuple[SymbolInformation, ...]):
+    def save_symbols_info(self, symbols: tuple[typing.Union[SymbolInformation, IndexInformation], ...]):
         st.logger.info("Updating {} symbols info".format(len(symbols)))
         for symbol in symbols:
             doc_filter = {'_id': getattr(symbol, 'ticker')}
-            doc_values = {"$set": {"isin": getattr(symbol, 'isin'),
-                                   "name": getattr(symbol, 'name'),
-                                   "exchange": getattr(symbol, 'exchange'),
-                                   "date": datetime.utcnow()}}
-
+            if isinstance(symbol, IndexInformation):
+                doc_values = {"$set": {"name": getattr(symbol, 'name'),
+                                       "date": datetime.utcnow()}}
+            else:
+                doc_values = {"$set": {"isin": getattr(symbol, 'isin'),
+                                       "name": getattr(symbol, 'name'),
+                                       "exchange": getattr(symbol, 'exchange'),
+                                       "date": datetime.utcnow()}}
             try:
                 self.collection.update_one(filter=doc_filter, update=doc_values, upsert=True)
             except PyMongoError as e:
@@ -41,7 +44,7 @@ class MongoAdapter(SymbolRepositoryInterface):
             st.logger.exception(e)
             raise RepositoryException
 
-        return tuple(IndexInformation(ticker=d['_id'], isin=d['isin'], name=d['name']) for d in data)
+        return tuple(IndexInformation(ticker=d['_id'], name=d['name']) for d in data)
 
     def get_symbols_info(self) -> tuple[SymbolInformation]:
         try:
