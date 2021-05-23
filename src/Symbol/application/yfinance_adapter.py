@@ -5,7 +5,7 @@ import pandas as pd
 from yfinance import Tickers as yf_tickers
 from yfinance import Ticker as yf_ticker_info
 
-from src.Symbol.domain.symbol import Symbol, SymbolInformation, Stock, IndexInformation
+from src.Symbol.domain.symbol import Symbol, Stock, IndexInformation, StockInformation
 from src.Symbol.domain.ports.symbol_service_interface import SymbolServiceInterface
 from src.Utils.exceptions import RepositoryException, DomainServiceException, PublisherException
 from src import settings as st
@@ -124,8 +124,8 @@ class YFinanceAdapter(SymbolServiceInterface):
                             st.logger.info("Discarding symbol: {}".format(ticker))
                         else:
                             name = self.__format_name_field(name)
-                            symbols.append(SymbolInformation(ticker=ticker, name=name, isin=isin,
-                                                             exchange=exchange_ticker))
+                            symbols.append(StockInformation(ticker=ticker, name=name, isin=isin,
+                                                            exchange=exchange_ticker))
                 except Exception as e:
                     st.logger.exception(e)
                 time.sleep(1)

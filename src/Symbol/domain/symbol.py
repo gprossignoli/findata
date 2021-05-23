@@ -19,12 +19,15 @@ class Stock(Symbol):
 @dataclass
 class SymbolInformation:
     ticker: str
-    isin: str
     name: str
+
+
+@dataclass
+class StockInformation(SymbolInformation):
+    isin: str
     exchange: str
 
 
 @dataclass
-class IndexInformation:
-    ticker: str
-    name: str
+class IndexInformation(SymbolInformation):
+    pass

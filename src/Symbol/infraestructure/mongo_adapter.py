@@ -5,7 +5,7 @@ from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
 from src.Symbol.domain.ports.symbol_repository_interface import SymbolRepositoryInterface
-from src.Symbol.domain.symbol import SymbolInformation, IndexInformation
+from src.Symbol.domain.symbol import SymbolInformation, IndexInformation, StockInformation
 from src.Utils.exceptions import RepositoryException
 from src import settings as st
 
@@ -18,11 +18,11 @@ class MongoAdapter(SymbolRepositoryInterface):
         self.__connect_to_db()
         self.collection = self.__db_client['findata']['symbols']
 
-    def save_symbols_info(self, symbols: tuple[typing.Union[SymbolInformation, IndexInformation], ...]):
+    def save_symbols_info(self, symbols: tuple[typing.Union[SymbolInformation, StockInformation, IndexInformation], ...]):
         st.logger.info("Updating {} symbols info".format(len(symbols)))
         for symbol in symbols:
             doc_filter = {'_id': getattr(symbol, 'ticker')}
-            if isinstance(symbol, IndexInformation):
+            if isinstance(symbol, IndexInformation) or isinstance(symbol, SymbolInformation):
                 doc_values = {"$set": {"name": getattr(symbol, 'name'),
                                        "date": datetime.utcnow()}}
             else:
@@ -46,15 +46,21 @@ class MongoAdapter(SymbolRepositoryInterface):
 
         return tuple(IndexInformation(ticker=d['_id'], name=d['name']) for d in data)
 
-    def get_symbols_info(self) -> tuple[SymbolInformation]:
+    def get_symbols_info(self) -> tuple[typing.Union[SymbolInformation, StockInformation], ...]:
         try:
             data = self.collection.find({})
         except PyMongoError as e:
             st.logger.exception(e)
             raise RepositoryException
-
-        return tuple(SymbolInformation(ticker=d['_id'], isin=d['isin'], name=d['name'], exchange=d['exchange']) for d in data
-                     if d['_id'] not in st.exchanges)
+        ret = list()
+        for d in data:
+            if d['_id'] not in st.exchanges:
+                if d.get('isin') is not None and d.get('exchange') is not None:
+                    ret.append(StockInformation(ticker=d['_id'], isin=d['isin'],
+                                                name=d['name'], exchange=d['exchange']))
+                else:
+                    SymbolInformation(ticker=d['_id'], name=d['name'])
+        return tuple(ret)
 
     def clean_old_symbols(self) -> None:
         try:
