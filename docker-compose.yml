@@ -14,8 +14,8 @@ services:
     image: mongo:4.4-bionic
     container_name: findata_mongodb
     environment:
-      - 'MONGODB_USER=findata'
-      - 'MONGODB_PASS=findatapass'
+      - MONGODB_USER=${MONGODB_USER}
+      - MONGODB_PASS=${MONGODB_PASS}
     ports:
       - "27018:27017"
     volumes:
@@ -23,6 +23,7 @@ services:
       - mongo-configdb:/data/configdb
     networks:
       - invest-system
+    env_file: .env
 volumes:
   mongodata:
   mongo-configdb:
