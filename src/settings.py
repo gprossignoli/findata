@@ -1,15 +1,27 @@
-import logging
 import os
-import configparser
+import logging
 from logging.handlers import RotatingFileHandler
 
+from environ import environ
+
 ROOT_DIR = os.path.dirname(os.path.abspath("settings.py"))
-settings_file = open(os.path.join(ROOT_DIR, "settings.ini"), "r")
-config = configparser.ConfigParser()
-config.read(os.path.join(ROOT_DIR, "settings.ini"))
+ENV_FILE = os.path.abspath(os.path.join(ROOT_DIR, ".env"))
 
-MONGO_HOST, MONGO_PORT = config.get("DB", "mongo_db").split(":")
+env = environ.Env(
+    MONGO_DB=(str, ""),
+    MONGODB_USER=(str, ""),
+    MONGODB_PASS=(str, ""),
+    RABBIT_HOST=(str, ""),
+    RABBIT_PORT=(int, None),
+    RABBIT_USER=(str, ""),
+    RABBIT_PASSWORD=(str, ""),
+    RABBIT_VHOST=(str, ""),
+)
 
+env.read_env(ENV_FILE)
+
+
+MONGO_HOST, MONGO_PORT = env("MONGO_DB").split(":")
 
 # LOGGING CONFIG
 
@@ -28,7 +40,7 @@ info_logger = RotatingFileHandler(filename='findata.log', maxBytes=2097152, back
 info_logger.setLevel(logging.INFO)
 info_logger.setFormatter(formatter)
 
-#to log errors messages
+# to log errors messages
 error_logger = RotatingFileHandler(filename='findata_errors.log', maxBytes=2097152, backupCount=2)
 error_logger.setLevel(logging.ERROR)
 error_logger.setFormatter(formatter)
@@ -42,11 +54,11 @@ logger.addHandler(error_logger)
 exchanges = ('^IBEX', '^GSPC', '^DJI', '^IXIC', '^STOXX50E', '^N100', 'INDC.MC')
 
 # Rabbitmq data
-RABBIT_HOST = config.get("RABBIT", "rabbit_host")
-RABBIT_PORT = config.get("RABBIT", "rabbit_port")
-RABBIT_USER = config.get("RABBIT", "rabbit_user")
-RABBIT_PASSW = config.get("RABBIT", "rabbit_password")
-RABBIT_VHOST = config.get("RABBIT", "rabbit_vhost")
+RABBIT_HOST = env("RABBIT_HOST")
+RABBIT_PORT = env("RABBIT_PORT")
+RABBIT_USER = env("RABBIT_USER")
+RABBIT_PASSW = env("RABBIT_PASSWORD")
+RABBIT_VHOST = env("RABBIT_VHOST")
 
 SYMBOLS_HISTORY_EXCHANGE = 'findata_symbols'
 SYMBOL_HISTORY_ROUTING_KEY = 'findata.symbol'

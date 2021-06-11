@@ -5,6 +5,7 @@ pandas==1.2.2
 pika==1.2.0
 pymongo==3.11.3
 python-crontab==2.5.1
+python-environ==0.4.54
 requests==2.25.1
 ujson==4.0.2
 urllib3==1.26.3
