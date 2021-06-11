@@ -88,7 +88,7 @@ class RabbitmqPublisherAdapter(SymbolPublisherInterface):
 
         try:
             channel = connection.channel()
-            channel.exchange_declare(exchange=st.SYMBOLS_HISTORY_EXCHANGE, exchange_type='topic')
+            channel.exchange_declare(exchange=st.SYMBOLS_HISTORY_EXCHANGE, exchange_type='topic', durable=True)
         except AMQPChannelError as e:
             st.logger.exception(e)
             raise PublisherException()
